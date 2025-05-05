@@ -5,12 +5,26 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
+	"slices"
 	"strconv"
 	"strings"
 )
 
 // Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
 var _ = fmt.Fprint
+
+const (
+	TypeBuiltin    = "builtin"
+	TypeExecutable = "executable"
+	TypeUnknown    = "unknown"
+)
+
+var builtins = []string{
+	"echo",
+	"exit",
+	"type",
+}
 
 func main() {
 	for {
@@ -32,13 +46,13 @@ func main() {
 
 		switch command {
 		case "exit":
-			exitCommand(args)
+			cmdExit(args)
 			continue
 		case "echo":
-			echoCommand(args)
+			cmdEcho(args)
 			continue
 		case "type":
-			typeCommand(args)
+			cmdType(args)
 			continue
 		}
 
@@ -46,7 +60,7 @@ func main() {
 	}
 }
 
-func exitCommand(args []string) {
+func cmdExit(args []string) {
 	status := 0
 	var err error
 
@@ -60,7 +74,7 @@ func exitCommand(args []string) {
 	os.Exit(status)
 }
 
-func echoCommand(args []string) {
+func cmdEcho(args []string) {
 	message := ""
 
 	if len(args) > 1 {
@@ -69,21 +83,40 @@ func echoCommand(args []string) {
 	fmt.Println(message)
 }
 
-func typeCommand(args []string) {
+func cmdType(args []string) {
 	commandToCheck := ""
-
 	if len(args) > 1 {
 		commandToCheck = args[1]
 	}
 	if commandToCheck == "" {
 		return
 	}
-	switch commandToCheck {
-	case "echo", "exit", "type":
+
+	commandType := getCommandType(commandToCheck)
+
+	switch commandType {
+	case TypeBuiltin:
 		fmt.Println(commandToCheck + " is a shell builtin")
+	case TypeExecutable:
+		path, _ := exec.LookPath(commandToCheck)
+		fmt.Printf("%s is %s\n", commandToCheck, path)
 	default:
 		fmt.Println(commandToCheck + ": not found")
 	}
+}
+
+func getCommandType(cmd string) string {
+	// Check if it's a built-in command
+	if slices.Contains(builtins, cmd) {
+		return TypeBuiltin
+	}
+
+	// Check if it's an executable in PATH
+	if path, err := exec.LookPath(cmd); err == nil && path != "" {
+		return TypeExecutable
+	}
+
+	return TypeUnknown
 }
 
 func validateStatusCode(statusCode string) (int, error) {
