@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -28,14 +29,23 @@ func main() {
 			continue
 		}
 
+		if args[0] == "echo" {
+			message := ""
+
+			if len(args) > 1 {
+				message = strings.Join(args[1:], " ")
+			}
+			fmt.Println(message)
+			continue
+		}
+
 		if args[0] == "exit" {
 			status := 0
 
 			if len(args) > 1 {
-				if code, err := strconv.Atoi(args[1]); err == nil {
-					status = code
-				} else {
-					fmt.Println("Invalid exit status, must be an integer")
+				status, err = validateStatusCode(args[1])
+				if err != nil {
+					fmt.Println(err)
 					continue
 				}
 			}
@@ -43,5 +53,13 @@ func main() {
 		}
 
 		fmt.Println(args[0] + ": command not found")
+	}
+}
+
+func validateStatusCode(statusCode string) (int, error) {
+	if code, err := strconv.Atoi(statusCode); err == nil {
+		return code, nil
+	} else {
+		return 0, errors.New("Invalid exit status, must be an integer")
 	}
 }
