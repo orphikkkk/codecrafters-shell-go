@@ -41,7 +41,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		args := strings.Fields(input)
+		args := parseInput(input)
 		if len(args) == 0 {
 			continue
 		}
@@ -65,6 +65,32 @@ func main() {
 			fmt.Println(command + ": command not found")
 		}
 	}
+}
+
+func parseInput(input string) []string {
+	var args []string
+	var current string
+	inSingleQuotes := false
+
+	input = strings.TrimSpace(input)
+
+	for i := 0; i < len(input); i++ {
+		if input[i] == '\'' {
+			inSingleQuotes = !inSingleQuotes
+		} else if input[i] == ' ' && !inSingleQuotes {
+			if current != "" {
+				args = append(args, current)
+				current = ""
+			}
+		} else {
+			current += string(input[i])
+		}
+	}
+	if current != "" {
+		args = append(args, current)
+	}
+
+	return args
 }
 
 func getCommandType(cmd string) string {
