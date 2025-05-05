@@ -43,20 +43,32 @@ func main() {
 			continue
 		}
 		command := args[0]
+		commandType := getCommandType(command)
 
-		switch command {
-		case "exit":
-			cmdExit(args)
-			continue
-		case "echo":
-			cmdEcho(args)
-			continue
-		case "type":
-			cmdType(args)
-			continue
+		switch commandType {
+		case TypeBuiltin:
+			switch command {
+			case "exit":
+				cmdExit(args)
+				continue
+			case "echo":
+				cmdEcho(args)
+				continue
+			case "type":
+				cmdType(args)
+				continue
+			}
+		case TypeExecutable:
+			cmd := exec.Command(command, args[1:]...)
+			cmd.Stdin = os.Stdin
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			if err := cmd.Run(); err != nil {
+				fmt.Println("Error:", err)
+			}
+		default:
+			fmt.Println(command + ": command not found")
 		}
-
-		fmt.Println(args[0] + ": command not found")
 	}
 }
 
