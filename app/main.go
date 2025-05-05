@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 )
 
 // Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
@@ -21,10 +23,25 @@ func main() {
 			os.Exit(1)
 		}
 
-		if command == "exit" {
-			break
+		args := strings.Fields(command)
+		if len(args) == 0 {
+			continue
 		}
 
-		fmt.Println(command[:len(command)-1] + ": command not found")
+		if args[0] == "exit" {
+			status := 0
+
+			if len(args) > 1 {
+				if code, err := strconv.Atoi(args[1]); err == nil {
+					status = code
+				} else {
+					fmt.Println("Invalid exit status, must be an integer")
+					continue
+				}
+			}
+			os.Exit(status)
+		}
+
+		fmt.Println(args[0] + ": command not found")
 	}
 }
