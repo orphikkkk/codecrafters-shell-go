@@ -66,6 +66,10 @@ func cmdPwd(args []string) {
 
 func cmdCd(args []string) {
 	path := args[1]
+	home := os.Getenv("HOME")
+
+	path = strings.Replace(path, "~", home, -1)
+
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		fmt.Fprintf(os.Stderr, "cd: %s: No such file or directory\n", path)
 		return
