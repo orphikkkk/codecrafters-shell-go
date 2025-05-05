@@ -64,6 +64,19 @@ func cmdPwd(args []string) {
 	fmt.Println(dir)
 }
 
+func cmdCd(args []string) {
+	path := args[1]
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		fmt.Fprintf(os.Stderr, "cd: %s: No such file or directory\n", path)
+		return
+	}
+
+	err := os.Chdir(path)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
 func validateStatusCode(statusCode string) (int, error) {
 	if code, err := strconv.Atoi(statusCode); err == nil {
 		return code, nil

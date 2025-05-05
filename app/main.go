@@ -25,6 +25,7 @@ func init() {
 		"exit": cmdExit,
 		"type": cmdType,
 		"pwd":  cmdPwd,
+		"cd":   cmdCd,
 	}
 }
 
