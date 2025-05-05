@@ -17,42 +17,72 @@ func main() {
 		fmt.Fprint(os.Stdout, "$ ")
 
 		// Wait for user input
-		command, err := bufio.NewReader(os.Stdin).ReadString('\n')
+		input, err := bufio.NewReader(os.Stdin).ReadString('\n')
 
 		if err != nil {
 			fmt.Fprintln(os.Stderr, "Error reading input:", err)
 			os.Exit(1)
 		}
 
-		args := strings.Fields(command)
+		args := strings.Fields(input)
 		if len(args) == 0 {
 			continue
 		}
+		command := args[0]
 
-		if args[0] == "echo" {
-			message := ""
-
-			if len(args) > 1 {
-				message = strings.Join(args[1:], " ")
-			}
-			fmt.Println(message)
+		switch command {
+		case "exit":
+			exitCommand(args)
+			continue
+		case "echo":
+			echoCommand(args)
+			continue
+		case "type":
+			typeCommand(args)
 			continue
 		}
 
-		if args[0] == "exit" {
-			status := 0
-
-			if len(args) > 1 {
-				status, err = validateStatusCode(args[1])
-				if err != nil {
-					fmt.Println(err)
-					continue
-				}
-			}
-			os.Exit(status)
-		}
-
 		fmt.Println(args[0] + ": command not found")
+	}
+}
+
+func exitCommand(args []string) {
+	status := 0
+	var err error
+
+	if len(args) > 1 {
+		status, err = validateStatusCode(args[1])
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+	os.Exit(status)
+}
+
+func echoCommand(args []string) {
+	message := ""
+
+	if len(args) > 1 {
+		message = strings.Join(args[1:], " ")
+	}
+	fmt.Println(message)
+}
+
+func typeCommand(args []string) {
+	commandToCheck := ""
+
+	if len(args) > 1 {
+		commandToCheck = args[1]
+	}
+	if commandToCheck == "" {
+		return
+	}
+	switch commandToCheck {
+	case "echo", "exit", "type":
+		fmt.Println(commandToCheck + " is a shell builtin")
+	default:
+		fmt.Println(commandToCheck + ": not found")
 	}
 }
 
