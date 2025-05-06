@@ -69,25 +69,44 @@ func main() {
 
 func parseInput(input string) []string {
 	var args []string
-	var current string
-	inSingleQuotes := false
-
+	var current strings.Builder
+	inSingleQuote := false
+	inDoubleQuote := false
+	escaped := false
 	input = strings.TrimSpace(input)
-
-	for i := 0; i < len(input); i++ {
-		if input[i] == '\'' {
-			inSingleQuotes = !inSingleQuotes
-		} else if input[i] == ' ' && !inSingleQuotes {
-			if current != "" {
-				args = append(args, current)
-				current = ""
-			}
-		} else {
-			current += string(input[i])
+	for _, r := range input {
+		if escaped {
+			current.WriteRune(r)
+			escaped = false
+			continue
 		}
+
+		if r == '\'' && !inDoubleQuote {
+			// Toggle single quote mode
+			inSingleQuote = !inSingleQuote
+			continue
+		}
+
+		if r == '"' && !inSingleQuote {
+			// Toggle double quote mode
+			inDoubleQuote = !inDoubleQuote
+			continue
+		}
+
+		if r == ' ' && !inSingleQuote && !inDoubleQuote {
+			// Space outside of quotes means argument boundary
+			if current.Len() > 0 {
+				args = append(args, current.String())
+				current.Reset()
+			}
+			continue
+		}
+
+		current.WriteRune(r)
 	}
-	if current != "" {
-		args = append(args, current)
+
+	if current.Len() > 0 {
+		args = append(args, current.String())
 	}
 
 	return args
