@@ -76,7 +76,19 @@ func parseInput(input string) []string {
 	input = strings.TrimSpace(input)
 	for _, r := range input {
 		if escaped {
-			current.WriteRune(r)
+			if inDoubleQuote {
+				// In double quotes, backslash only escapes $, ", \, and newline
+				if r == '\\' || r == '$' || r == '"' || r == '\n' {
+					current.WriteRune(r)
+				} else {
+					// For other characters, add both the backslash and the character
+					current.WriteRune('\\')
+					current.WriteRune(r)
+				}
+			} else {
+				// Outside quotes, all escaped characters are taken literally
+				current.WriteRune(r)
+			}
 			escaped = false
 			continue
 		}
@@ -93,9 +105,14 @@ func parseInput(input string) []string {
 			continue
 		}
 
-		if r == '\\' && !inSingleQuote && !inDoubleQuote {
-			// Non-quoted backlash
-			escaped = true
+		if r == '\\' {
+			if inSingleQuote {
+				// Backslash in single quotes is always literal
+				current.WriteRune(r)
+			} else {
+				// Mark as escaped for next iteration
+				escaped = true
+			}
 			continue
 		}
 
