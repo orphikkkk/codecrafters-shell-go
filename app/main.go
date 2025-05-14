@@ -93,6 +93,12 @@ func parseInput(input string) []string {
 			continue
 		}
 
+		if r == '\\' && !inSingleQuote && !inDoubleQuote {
+			// Non-quoted backlash
+			escaped = true
+			continue
+		}
+
 		if r == ' ' && !inSingleQuote && !inDoubleQuote {
 			// Space outside of quotes means argument boundary
 			if current.Len() > 0 {
