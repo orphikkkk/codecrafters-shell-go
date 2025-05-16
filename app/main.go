@@ -11,6 +11,18 @@ import (
 // Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
 var _ = fmt.Fprint
 
+type Command struct {
+	Name         string
+	Args         []string
+	Redirections []Redirection
+}
+
+type Redirection struct {
+	Type           string // ">", ">>", "2>", etc.
+	FileDescriptor int    // 0 for stdin, 1 for stdout, 2 for stderr
+	Target         string // Filename or target
+}
+
 const (
 	TypeBuiltin    = "builtin"
 	TypeExecutable = "executable"
@@ -45,16 +57,16 @@ func main() {
 		if len(args) == 0 {
 			continue
 		}
-		command := args[0]
-		commandType := getCommandType(command)
+		command := parseCommand(args)
+		commandType := getCommandType(command.Name)
 
 		switch commandType {
 		case TypeBuiltin:
-			if handler, exists := builtins[command]; exists {
+			if handler, exists := builtins[command.Name]; exists {
 				handler(args)
 			}
 		case TypeExecutable:
-			cmd := exec.Command(command, args[1:]...)
+			cmd := exec.Command(command.Name, args[1:]...)
 			cmd.Stdin = os.Stdin
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
@@ -62,7 +74,7 @@ func main() {
 				fmt.Println("Error:", err)
 			}
 		default:
-			fmt.Println(command + ": command not found")
+			fmt.Println(command.Name + ": command not found")
 		}
 	}
 }
@@ -135,6 +147,37 @@ func parseInput(input string) []string {
 	return args
 }
 
+func parseCommand(tokens []string) Command {
+	cmd := Command{}
+
+	if len(tokens) == 0 {
+		return cmd
+	}
+
+	cmd.Name = tokens[0]
+	for i := 1; i < len(tokens); i++ {
+		token := tokens[i]
+
+		if !strings.Contains(token, ">") {
+			cmd.Args = append(cmd.Args, token)
+			continue
+		}
+
+		// Check for redirection patterns
+		redirection := parseRedirection(token)
+
+		// If redirection has a separate target, consume the next token
+		if redirection.Target == "" && i+1 < len(tokens) {
+			redirection.Target = tokens[i+1]
+			i++
+		}
+
+		cmd.Redirections = append(cmd.Redirections, redirection)
+	}
+
+	return cmd
+}
+
 func getCommandType(cmd string) string {
 	// Check if it's a built-in command
 	if _, exists := builtins[cmd]; exists {
@@ -147,4 +190,11 @@ func getCommandType(cmd string) string {
 	}
 
 	return TypeUnknown
+}
+
+func parseRedirection(token string) Redirection {
+	return Redirection{
+		Type:           token,
+		FileDescriptor: 0,
+	}
 }
