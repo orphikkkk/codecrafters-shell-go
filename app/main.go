@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/codecrafters-io/shell-starter-go/redirect"
 )
 
 // Ensures gofmt doesn't remove the "fmt" import in stage 1 (feel free to remove this!)
@@ -17,11 +19,7 @@ type Command struct {
 	Redirections []Redirection
 }
 
-type Redirection struct {
-	Type           string // ">", ">>", "2>", etc.
-	FileDescriptor int    // 0 for stdin, 1 for stdout, 2 for stderr
-	Target         string // Filename or target
-}
+type Redirection = redirect.Redirection
 
 const (
 	TypeBuiltin    = "builtin"
@@ -58,8 +56,14 @@ func main() {
 			continue
 		}
 		command := parseCommand(args)
-
 		commandType := getCommandType(command.Name)
+		if command.Redirections != nil {
+			err := redirect.Handle(command.Redirections)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, "Error handling redirections:", err)
+				os.Exit(1)
+			}
+		}
 
 		switch commandType {
 		case TypeBuiltin:
@@ -165,7 +169,7 @@ func parseCommand(tokens []string) Command {
 		}
 
 		// Check for redirection patterns
-		redirection := parseRedirection(token)
+		redirection := redirect.ParseRedirection(token)
 
 		// If redirection has a separate target, consume the next token
 		if redirection.Target == "" && i+1 < len(tokens) {

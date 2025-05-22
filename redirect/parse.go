@@ -1,6 +1,8 @@
-package main
+package redirect
 
-import "strings"
+import (
+	"strings"
+)
 
 /**
  * This file contains the implementation to parse Redirections.
@@ -12,7 +14,13 @@ import "strings"
  * File descriptor duplication: 2>&1, 1>&2
  */
 
-func parseRedirection(token string) Redirection {
+type Redirection struct {
+	Type           string
+	FileDescriptor int
+	Target         string
+}
+
+func ParseRedirection(token string) Redirection {
 	red := Redirection{
 		Type:           ">",
 		FileDescriptor: 1,
