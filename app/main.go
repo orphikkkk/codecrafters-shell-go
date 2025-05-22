@@ -57,6 +57,7 @@ func main() {
 		}
 		command := parseCommand(args)
 		commandType := getCommandType(command.Name)
+
 		if command.Redirections != nil {
 			err := redirect.Handle(command.Redirections)
 			if err != nil {

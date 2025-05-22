@@ -21,7 +21,7 @@ func Handle(redirections []Redirection) error {
 	redir := redirections[0]
 	switch redir.Type {
 	case ">":
-		return handleOutputRedirection(redir)
+		return redirectOutput(redir, false)
 	// case ">>":
 	// 	handleAppendRedirection(redirections)
 	// case "<":
@@ -37,13 +37,19 @@ func Handle(redirections []Redirection) error {
 	}
 }
 
-func handleOutputRedirection(redirections Redirection) error {
+func redirectOutput(redirections Redirection, append bool) error {
+	var flags int
 
-	file, err := os.Create(redirections.Target)
+	if append {
+		flags = os.O_CREATE | os.O_WRONLY | os.O_APPEND
+	} else {
+		flags = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
+	}
+
+	file, err := os.OpenFile(redirections.Target, flags, 0644)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
 
 	os.Stdout = file
 	return nil
