@@ -58,6 +58,7 @@ func main() {
 			continue
 		}
 		command := parseCommand(args)
+
 		commandType := getCommandType(command.Name)
 
 		switch commandType {
@@ -190,11 +191,4 @@ func getCommandType(cmd string) string {
 	}
 
 	return TypeUnknown
-}
-
-func parseRedirection(token string) Redirection {
-	return Redirection{
-		Type:           token,
-		FileDescriptor: 0,
-	}
 }
